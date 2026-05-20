@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#eae8e1">
+<title>Samuel Pineda — Creative Portfolio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════
+   RESET & TOKENS
+══════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { height: 100%; -webkit-text-size-adjust: 100%; }
+body {
+  height: 100%; width: 100%;
+  overflow: hidden;
+  font-family: 'DM Sans', sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+  cursor: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+  --cream: #eae8e1;
+  --ink:   #1a1a18;
+  --mid:   #6b6b65;
+  --line:  #c8c5bb;
+  --accent:#1a1a18;
+
+  /* spacing */
+  --px: clamp(18px, 5vw, 52px);
+  --py: clamp(16px, 3vh, 32px);
+  --gap: clamp(14px, 3vw, 40px);
+}
+
+/* ══════════════════════════════════════════
+   CUSTOM CURSOR (desktop only)
+══════════════════════════════════════════ */
+#cursor-dot, #cursor-ring { display: none; }
+@media (pointer: fine) {
+  #cursor-dot {
+    display: block;
+    position: fixed; top: 0; left: 0;
+    width: 8px; height: 8px;
+    background: var(--ink); border-radius: 50%;
+    pointer-events: none; z-index: 9999;
+    transform: translate(-50%,-50%);
+    transition: transform .1s;
+  }
+  #cursor-ring {
+    display: block;
+    position: fixed; top: 0; left: 0;
+    width: 36px; height: 36px;
+    border: 1.5px solid var(--ink); border-radius: 50%;
+    pointer-events: none; z-index: 9998;
+    transform: translate(-50%,-50%);
+    transition: width .3s, height .3s, opacity .3s;
+    opacity: .55;
+  }
+  body.cursor-hover #cursor-dot  { transform: translate(-50%,-50%) scale(2.5); }
+  body.cursor-hover #cursor-ring { width: 56px; height: 56px; opacity: .25; }
+}
+
+/* ══════════════════════════════════════════
+   PROGRESS DOTS
+══════════════════════════════════════════ */
+.progress-dots {
+  position: fixed;
+  right: 14px; top: 50%;
+  transform: translateY(-50%);
+  display: flex; flex-direction: column; gap: 7px;
+  z-index: 200;
+}
+.pdot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--line); cursor: pointer;
+  transition: background .2s, transform .2s;
+}
+.pdot.active { background: var(--ink); transform: scale(1.5); }
+@media (max-width: 480px) {
+  .progress-dots { right: 8px; gap: 5px; }
+  .pdot { width: 4px; height: 4px; }
+}
+
+/* ══════════════════════════════════════════
+   SLIDE SYSTEM
+══════════════════════════════════════════ */
+.slide-wrapper { position: fixed; inset: 0; }
+
+.slide {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  padding: var(--py) var(--px);
+  padding-right: calc(var(--px) + 20px); /* room for progress dots */
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(50px);
+  transition: opacity .5s cubic-bezier(.4,0,.2,1),
+              transform .5s cubic-bezier(.4,0,.2,1);
+  overflow: hidden;
+}
+.slide.active   { opacity: 1; pointer-events: all; transform: none; }
+.slide.exit-lft { opacity: 0; transform: translateX(-50px); }
+
+/* entrance stagger */
+.slide.active .hdr  { animation: fadeUp .5s .05s both; }
+.slide.active .body { animation: fadeUp .5s .12s both; }
+.slide.active .ftr  { animation: fadeUp .5s .18s both; }
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(16px); }
+  to   { opacity:1; transform:none; }
+}
+
+/* ── HEADER ── */
+.hdr {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: clamp(8px, 1.8vw, 10px);
+  letter-spacing: .16em; text-transform: uppercase;
+  color: var(--mid);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: clamp(10px,1.5vh,16px);
+  flex-shrink: 0;
+}
+
+/* ── BODY ── */
+.body {
+  flex: 1; display: flex;
+  min-height: 0;
+  padding: clamp(12px,2vh,22px) 0;
+}
+
+/* ── FOOTER ── */
+.ftr {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: clamp(8px,1.8vw,10px);
+  letter-spacing: .16em; text-transform: uppercase; color: var(--mid);
+  border-top: 1px solid var(--line);
+  padding-top: clamp(10px,1.5vh,16px);
+  flex-shrink: 0;
+}
+
+/* ── NAV ARROWS ── */
+.nav-arrows { display: flex; gap: 8px; }
+.nav-btn {
+  width: clamp(36px,8vw,48px);
+  height: clamp(24px,4vh,30px);
+  border: 1.5px solid var(--ink); border-radius: 40px;
+  background: transparent;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; color: var(--ink);
+  cursor: pointer;
+  transition: background .2s, color .2s;
+  touch-action: manipulation;
+}
+.nav-btn:hover, .nav-btn:active { background: var(--ink); color: var(--cream); }
+.nav-btn:disabled { border-color: var(--line); color: var(--line); pointer-events: none; }
+
+/* ══════════════════════════════════════════
+   SHARED HEADING SIZE
+══════════════════════════════════════════ */
+.sec-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(36px, 7vw, 80px);
+  line-height: .95; letter-spacing: .03em;
+}
+
+
+/* ══════════════════════════════════════════
+   SLIDE 1 — HOME
+══════════════════════════════════════════ */
+#s-home .body {
+  flex-direction: column; justify-content: center;
+  align-items: center; text-align: center; gap: 0;
+}
+.home-label {
+  font-size: clamp(9px,2vw,11px); letter-spacing: .22em; text-transform: uppercase;
+  color: var(--mid); margin-bottom: 6px;
+}
+.home-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(52px, 13vw, 160px);
+  line-height: .88; letter-spacing: .02em;
+  position: relative;
+}
+.highlight-word { display: inline-block; position: relative; }
+.highlight-word::after {
+  content: '';
+  position: absolute; bottom: 3px; left: -4px; right: -4px;
+  height: clamp(6px,1.2vw,14px);
+  background: var(--ink); z-index: -1;
+  transform: scaleX(0); transform-origin: left;
+  animation: barReveal .9s 1.2s cubic-bezier(.4,0,.2,1) forwards;
+}
+@keyframes barReveal { to { transform: scaleX(1); } }
+.home-sub {
+  font-size: clamp(9px,2vw,12px); letter-spacing: .2em; text-transform: uppercase;
+  color: var(--mid); margin-top: 16px;
+}
+.name-reveal {
+  display: inline-block;
+  clip-path: inset(0 100% 0 0);
+  animation: clipReveal 1s .4s cubic-bezier(.4,0,.2,1) forwards;
+}
+@keyframes clipReveal { to { clip-path: inset(0 0% 0 0); } }
+
+
+/* ══════════════════════════════════════════
+   SLIDE 2 — TABLE OF CONTENTS
+══════════════════════════════════════════ */
+#s-toc .body {
+  flex-direction: row; align-items: center; gap: var(--gap);
+}
+
+/* Mobile: stack */
+@media (max-width: 600px) {
+  #s-toc .body { flex-direction: column; align-items: flex-start; gap: 10px; }
+}
+
+.toc-left { flex-shrink: 0; max-width: 220px; }
+.toc-left h2 { font-family:'Bebas Neue',sans-serif; font-size: clamp(32px,6vw,64px); line-height:1; }
+.toc-left p  { font-size:11px; line-height:1.7; color:var(--mid); margin-top:10px; }
+@media (max-width:600px) { .toc-left p { display:none; } .toc-left { max-width:none; } }
+
+.toc-right {
+  flex:1; display:flex; flex-direction:column;
+  position:relative; padding-left: clamp(20px,5vw,60px);
+}
+.toc-right::before {
+  content:''; position:absolute; left: clamp(38px,7vw,78px);
+  top:0; bottom:0; width:1px; background:var(--line);
+}
+@media (max-width:600px) {
+  .toc-right { width:100%; padding-left:10px; }
+  .toc-right::before { left:28px; }
+}
+
+.toc-item {
+  display:flex; align-items:center;
+  padding: clamp(6px,1.2vh,11px) 0;
+  cursor:pointer; position:relative;
+}
+.toc-dot {
+  width:22px; height:14px;
+  border:1.5px solid var(--ink); border-radius:20px;
+  background:var(--cream); flex-shrink:0;
+  margin-left: clamp(16px,3vw,49px); position:relative; z-index:1;
+  transition: background .2s;
+}
+.toc-item:hover .toc-dot, .toc-item.toc-active .toc-dot { background:var(--ink); }
+.toc-label {
+  margin-left: clamp(10px,2vw,20px);
+  font-size: clamp(10px,2.2vw,13px); letter-spacing:.14em; text-transform:uppercase;
+  font-weight:500;
+  transition: font-size .2s, letter-spacing .2s;
+}
+.toc-item:hover .toc-label { font-size: clamp(11px,2.5vw,15px); letter-spacing:.2em; }
+.toc-num { margin-left:auto; font-size:10px; color:var(--line); padding-right:8px; }
+
+
+/* ══════════════════════════════════════════
+   SLIDE 3 — INTRODUCTION
+══════════════════════════════════════════ */
+#s-intro .body {
+  flex-direction: row; align-items: center; gap: var(--gap);
+}
+@media (max-width:640px) {
+  #s-intro .body { flex-direction: column; align-items: flex-start; gap: 14px; }
+}
+.intro-text { flex:1; }
+.intro-text h2 { font-family:'Bebas Neue',sans-serif; font-size:clamp(34px,6vw,68px); line-height:.95; margin-bottom:14px; }
+.intro-text p  { font-size:clamp(11px,2vw,13px); line-height:1.8; color:var(--mid); margin-bottom:12px; }
+.intro-photo {
+  width: clamp(120px,28vw,280px);
+  height: clamp(150px,35vw,300px);
+  border-radius:14px; overflow:hidden; flex-shrink:0;
+}
+.intro-photo img { width:100%; height:100%; object-fit:cover; }
+@media (max-width:640px) {
+  .intro-photo { width:100%; height:200px; }
+}
+
+
+/* ══════════════════════════════════════════
+   SLIDE 4 — ABOUT
+══════════════════════════════════════════ */
+#s-about .body {
+  flex-direction: row; align-items: center; gap: var(--gap);
+}
+@media (max-width:640px) {
+  #s-about .body { flex-direction: column; align-items: center; gap: 16px; text-align:center; }
+}
+.about-photo {
+  width: clamp(130px,30vw,300px);
+  height: clamp(160px,36vw,280px);
+  border-radius:18px; overflow:hidden; flex-shrink:0;
+}
+.about-photo img { width:100%; height:100%; object-fit:cover; }
+@media (max-width:640px) {
+  .about-photo { width:160px; height:160px; border-radius:50%; }
+}
+.about-text h2 { font-family:'Bebas Neue',sans-serif; font-size:clamp(36px,7vw,80px); line-height:.9; margin-bottom:16px; }
+.about-text p  { font-size:clamp(11px,2vw,13px); line-height:1.8; color:var(--mid); }
+
+
+/* ══════════════════════════════════════════
+   SLIDE 5 — EDUCATION
+══════════════════════════════════════════ */
+#s-edu .body {
+  flex-direction: row; align-items: center; gap: var(--gap);
+}
+@media (max-width:640px) {
+  #s-edu .body { flex-direction: column; align-items: flex-start; gap: 10px; }
+}
+.edu-left { flex-shrink:0; max-width:220px; }
+.edu-left h2 { font-family:'Bebas Neue',sans-serif; font-size:clamp(34px,6vw,70px); line-height:.95; margin-bottom:12px; }
+.edu-left p  { font-size:11px; line-height:1.75; color:var(--mid); }
+@media (max-width:640px) { .edu-left { max-width:none; } .edu-left p { display:none; } }
+
+.edu-right {
+  flex:1; display:flex; flex-direction:column; gap:0;
+  position:relative; padding-left: clamp(20px,4vw,40px);
+}
+.edu-right::before {
+  content:''; position:absolute; left:0; top:6px; bottom:6px;
+  width:1px; background:var(--line);
+}
+.edu-item {
+  padding: clamp(10px,1.5vh,16px) 0;
+  border-bottom:1px solid var(--line);
+  position:relative;
+}
+.edu-item:last-child { border-bottom:none; }
+.edu-item::before {
+  content:''; position:absolute;
+  left: calc(-1 * clamp(20px,4vw,40px) - 8px + 1px);
+  top: clamp(14px,2vh,22px);
+  width:16px; height:10px;
+  border:1.5px solid var(--ink); border-radius:10px;
+  background:var(--cream);
+}
+.edu-meta { display:flex; justify-content:space-between; align-items:baseline; gap:8px; flex-wrap:wrap; }
+.edu-school { font-size:clamp(10px,2vw,13px); letter-spacing:.12em; text-transform:uppercase; font-weight:500; }
+.edu-year   { font-size:10px; color:var(--mid); white-space:nowrap; }
+.edu-desc   { font-size:11px; color:var(--mid); line-height:1.65; margin-top:5px; }
+
+
+/* ══════════════════════════════════════════
+   SLIDE 6 — PERSONAL SKILLS
+══════════════════════════════════════════ */
+#s-skills .body { flex-direction:column; justify-content:center; gap: clamp(14px,2.5vh,28px); }
+.skills-top { text-align:center; }
+.skills-top h2 { font-family:'Bebas Neue',sans-serif; font-size:clamp(34px,7vw,72px); letter-spacing:.06em; margin-bottom:10px; }
+.skills-top p  { font-size:clamp(10px,1.8vw,12px); line-height:1.75; color:var(--mid); max-width:520px; margin:0 auto; }
+
+.skills-rail {
+  width:100%; height:1px; background:var(--line);
+  display:flex; align-items:center; justify-content:space-around;
+}
+.skill-node {
+  width:22px; height:14px;
+  border:1.5px solid var(--ink); border-radius:20px; background:var(--cream);
+}
+
+.skills-grid {
+  display:grid; grid-template-columns:repeat(3,1fr);
+  border-top:1px solid var(--line);
+}
+@media (max-width:500px) {
+  .skills-grid { grid-template-columns:1fr; }
+  .skill-card  { border-right:none !important; border-bottom:1px solid var(--line); padding:14px 0 !important; }
+  .skill-card:last-child { border-bottom:none; }
+}
+.skill-card { padding: clamp(14px,2vh,22px) clamp(12px,2vw,28px); border-right:1px solid var(--line); }
+.skill-card:last-child { border-right:none; }
+.skill-card h3 { font-size:clamp(9px,1.8vw,12px); letter-spacing:.18em; text-transform:uppercase; font-weight:500; margin-bottom:7px; }
+.skill-card p  { font-size:clamp(10px,1.6vw,12px); line-height:1.7; color:var(--mid); }
+
+
+/* ══════════════════════════════════════════
+   SLIDE 7 — PROJECT PORTFOLIO (hero)
+══════════════════════════════════════════ */
+#s-port .body { position:relative; align-items:center; justify-content:center; }
+.port-flanks {
+  position:absolute; inset:0;
+  display:flex; align-items:center; pointer-events:none;
+}
+.port-flank {
+  width: clamp(80px,18vw,200px);
+  height: clamp(120px,28vh,280px);
+  overflow:hidden; flex-shrink:0;
+}
+.port-flank img { width:100%; height:100%; object-fit:cover; }
+.port-flank-l { border-radius:0 14px 14px 0; }
+.port-flank-r { border-radius:14px 0 0 14px; margin-left:auto; }
+.port-center  { text-align:center; z-index:1; padding:0 clamp(6px,2vw,20px); }
+.port-center h2 { font-family:'Bebas Neue',sans-serif; font-size:clamp(40px,9vw,100px); line-height:.9; letter-spacing:.04em; margin-bottom:14px; }
+.port-center p  { font-size:clamp(10px,1.8vw,12px); line-height:1.8; color:var(--mid); max-width:400px; margin:0 auto; }
+@media (max-width:480px) { .port-flanks { display:none; } }
+
+
+/* ══════════════════════════════════════════
+   SLIDE 8 — FIRST PROJECT
+══════════════════════════════════════════ */
+#s-proj1 .body { flex-direction:row; align-items:center; gap: var(--gap); }
+@media (max-width:640px) {
+  #s-proj1 .body { flex-direction:column; gap:14px; }
+}
+.proj-grid {
+  width: clamp(160px,35vw,320px);
+  display:grid; grid-template-columns:1fr 1fr;
+  grid-template-rows:1fr 1fr; gap:5px;
+  height: clamp(180px,36vw,270px);
+  border-radius:10px; overflow:hidden; flex-shrink:0;
+}
+.proj-grid .pg1 { grid-row:1/3; }
+@media (max-width:640px) {
+  .proj-grid { width:100%; height:180px; }
+}
+.proj-cell { background:var(--line); overflow:hidden; }
+.proj-cell img { width:100%; height:100%; object-fit:cover; }
+.proj-text h2 { font-family:'Bebas Neue',sans-serif; font-size:clamp(32px,6vw,68px); line-height:.95; margin-bottom:14px; }
+.proj-text p  { font-size:clamp(10px,1.8vw,12px); line-height:1.8; color:var(--mid); }
+
+
+/* ══════════════════════════════════════════
+   SLIDE 9 — SECOND PROJECT
+══════════════════════════════════════════ */
+#s-proj2 .body { flex-direction:column; justify-content:center; gap: clamp(12px,2vh,22px); }
+.proj2-strip {
+  display:flex; gap:5px; width:100%;
+  height: clamp(110px,22vw,180px);
+  border-radius:10px; overflow:hidden; flex-shrink:0;
+}
+.proj2-strip .ps-cell { flex:1; overflow:hidden; }
+.proj2-strip .ps-cell img { width:100%; height:100%; object-fit:cover; }
+@media (max-width:480px) {
+  .proj2-strip .ps-cell:nth-child(3),
+  .proj2-strip .ps-cell:nth-child(4) { display:none; }
+}
+.proj2-bottom { display:flex; align-items:flex-start; gap:14px; flex-wrap:wrap; }
+.proj2-bottom h2 { font-family:'Bebas Neue',sans-serif; font-size:clamp(30px,6vw,62px); line-height:.95; flex-shrink:0; }
+.proj2-col { flex:1; min-width:140px; font-size:clamp(10px,1.6vw,12px); line-height:1.75; color:var(--mid); padding:0 12px; }
+.proj2-col + .proj2-col { border-left:1px solid var(--line); }
+@media (max-width:480px) {
+  .proj2-col + .proj2-col { display:none; }
+  .proj2-col { padding:0; }
+}
+
+
+/* ══════════════════════════════════════════
+   SLIDE 10 — MESSAGE ME
+══════════════════════════════════════════ */
+#s-msg .body { flex-direction:column; justify-content:center; align-items:center; gap: clamp(14px,2.5vh,26px); text-align:center; }
+.msg-title {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(48px,12vw,120px);
+  line-height:.9; letter-spacing:.05em;
+}
+.msg-sub  { font-size:clamp(9px,2vw,12px); color:var(--mid); letter-spacing:.18em; text-transform:uppercase; }
+.msg-btn {
+  display:inline-flex; align-items:center; gap:10px;
+  border:1.5px solid var(--ink);
+  padding: clamp(12px,2vh,18px) clamp(28px,7vw,50px);
+  font-size:clamp(11px,2.5vw,13px); letter-spacing:.18em; text-transform:uppercase;
+  font-family:'DM Sans',sans-serif; font-weight:500;
+  cursor:pointer; background:transparent; color:var(--ink);
+  text-decoration:none;
+  transition: background .25s, color .25s;
+  touch-action:manipulation;
+}
+.msg-btn:hover, .msg-btn:active { background:var(--ink); color:var(--cream); }
+.msg-email { font-size:clamp(9px,2vw,11px); color:var(--mid); letter-spacing:.1em; }
+
+/* ══════════════════════════════════════════
+   SWIPE HINT (mobile only, auto-hides)
+══════════════════════════════════════════ */
+.swipe-hint {
+  position:fixed; bottom:70px; left:50%; transform:translateX(-50%);
+  font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--mid);
+  display:none; opacity:1; transition:opacity .5s;
+  pointer-events:none; z-index:300;
+}
+@media (pointer:coarse) { .swipe-hint { display:block; } }
+.swipe-hint.gone { opacity:0; }
+</style>
+</head>
+<body>
+
+<div id="cursor-dot"></div>
+<div id="cursor-ring"></div>
+<div class="progress-dots" id="progress-dots"></div>
+<div class="swipe-hint" id="swipe-hint">← Swipe to navigate →</div>
+
+<div class="slide-wrapper" id="slides">
+
+  <!-- ① HOME -->
+  <div class="slide active" id="s-home" data-slug="home">
+    <div class="hdr">
+      <span>Creative Presentation</span>
+      <span class="live-date"></span>
+    </div>
+    <div class="body">
+      <span class="home-label">Creative</span>
+      <h1 class="home-title"><span class="highlight-word">PORTFOLIO</span></h1>
+      <p class="home-sub">Presentation by <span class="name-reveal">Samuel Pineda</span></p>
+    </div>
+    <div class="ftr">
+      <span>@samuelpineda</span>
+      <div class="nav-arrows">
+        <button class="nav-btn" disabled>←</button>
+        <button class="nav-btn nav-next">→</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ② TABLE OF CONTENTS -->
+  <div class="slide" id="s-toc" data-slug="contents">
+    <div class="hdr"><span>Creative Presentation</span><span class="live-date"></span></div>
+    <div class="body">
+      <div class="toc-left">
+        <h2>TABLE OF<br>CONTENTS</h2>
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+      </div>
+      <div class="toc-right" id="toc-list"></div>
+    </div>
+    <div class="ftr">
+      <span>@samuelpineda</span>
+      <div class="nav-arrows">
+        <button class="nav-btn nav-prev">←</button>
+        <button class="nav-btn nav-next">→</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ③ INTRODUCTION -->
+  <div class="slide" id="s-intro" data-slug="introduction">
+    <div class="hdr"><span>Creative Presentation</span><span class="live-date"></span></div>
+    <div class="body">
+      <div class="intro-text">
+        <h2>INTRODUCTION</h2>
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+      </div>
+      <div class="intro-photo">
+        <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=600&q=80" alt="Samuel Pineda">
+      </div>
+    </div>
+    <div class="ftr">
+      <span>@samuelpineda</span>
+      <div class="nav-arrows">
+        <button class="nav-btn nav-prev">←</button>
+        <button class="nav-btn nav-next">→</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ④ ABOUT -->
+  <div class="slide" id="s-about" data-slug="about">
+    <div class="hdr"><span>Creative Presentation</span><span class="live-date"></span></div>
+    <div class="body">
+      <div class="about-photo">
+        <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=600&q=80" alt="Samuel Pineda">
+      </div>
+      <div class="about-text">
+        <h2>SAMUEL<br>PINEDA</h2>
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+      </div>
+    </div>
+    <div class="ftr">
+      <span>@samuelpineda</span>
+      <div class="nav-arrows">
+        <button class="nav-btn nav-prev">←</button>
+        <button class="nav-btn nav-next">→</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑤ EDUCATION -->
+  <div class="slide" id="s-edu" data-slug="education">
+    <div class="hdr"><span>Creative Presentation</span><span class="live-date"></span></div>
+    <div class="body">
+      <div class="edu-left">
+        <h2>EDUCATION</h2>
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+      </div>
+      <div class="edu-right">
+        <div class="edu-item">
+          <div class="edu-meta">
+            <span class="edu-school">Salford University</span>
+            <span class="edu-year">2020 – 2021</span>
+          </div>
+          <p class="edu-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+        </div>
+        <div class="edu-item">
+          <div class="edu-meta">
+            <span class="edu-school">Keithston University</span>
+            <span class="edu-year">2021 – 2023</span>
+          </div>
+          <p class="edu-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+        </div>
+        <div class="edu-item">
+          <div class="edu-meta">
+            <span class="edu-school">Arowwai University</span>
+            <span class="edu-year">2023 – 2025</span>
+          </div>
+          <p class="edu-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+        </div>
+      </div>
+    </div>
+    <div class="ftr">
+      <span>@samuelpineda</span>
+      <div class="nav-arrows">
+        <button class="nav-btn nav-prev">←</button>
+        <button class="nav-btn nav-next">→</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑥ PERSONAL SKILLS -->
+  <div class="slide" id="s-skills" data-slug="skills">
+    <div class="hdr"><span>Creative Presentation</span><span class="live-date"></span></div>
+    <div class="body">
+      <div class="skills-top">
+        <h2>PERSONAL SKILLS</h2>
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+      </div>
+      <div class="skills-rail">
+        <div class="skill-node"></div>
+        <div class="skill-node"></div>
+        <div class="skill-node"></div>
+      </div>
+      <div class="skills-grid">
+        <div class="skill-card">
+          <h3>Photography</h3>
+          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+        </div>
+        <div class="skill-card">
+          <h3>Videography</h3>
+          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+        </div>
+        <div class="skill-card">
+          <h3>Editing</h3>
+          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+        </div>
+      </div>
+    </div>
+    <div class="ftr">
+      <span>@samuelpineda</span>
+      <div class="nav-arrows">
+        <button class="nav-btn nav-prev">←</button>
+        <button class="nav-btn nav-next">→</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑦ PROJECT PORTFOLIO HERO -->
+  <div class="slide" id="s-port" data-slug="portfolio">
+    <div class="hdr"><span>Creative Presentation</span><span class="live-date"></span></div>
+    <div class="body">
+      <div class="port-flanks">
+        <div class="port-flank port-flank-l">
+          <img src="https://images.unsplash.com/photo-1552058544-f2b08422138a?w=400&q=80" alt="">
+        </div>
+        <div class="port-flank port-flank-r">
+          <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&q=80" alt="">
+        </div>
+      </div>
+      <div class="port-center">
+        <h2>PROJECT<br>PORTFOLIO</h2>
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+      </div>
+    </div>
+    <div class="ftr">
+      <span>@samuelpineda</span>
+      <div class="nav-arrows">
+        <button class="nav-btn nav-prev">←</button>
+        <button class="nav-btn nav-next">→</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑧ FIRST PROJECT -->
+  <div class="slide" id="s-proj1" data-slug="first-project">
+    <div class="hdr"><span>Creative Presentation</span><span class="live-date"></span></div>
+    <div class="body">
+      <div class="proj-grid">
+        <div class="proj-cell pg1"><img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&q=80" alt=""></div>
+        <div class="proj-cell"><img src="https://images.unsplash.com/photo-1529665253569-6d01c0eaf7b6?w=300&q=80" alt=""></div>
+        <div class="proj-cell"><img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=300&q=80" alt=""></div>
+      </div>
+      <div class="proj-text">
+        <h2>FIRST<br>PROJECT</h2>
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+      </div>
+    </div>
+    <div class="ftr">
+      <span>@samuelpineda</span>
+      <div class="nav-arrows">
+        <button class="nav-btn nav-prev">←</button>
+        <button class="nav-btn nav-next">→</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑨ SECOND PROJECT -->
+  <div class="slide" id="s-proj2" data-slug="second-project">
+    <div class="hdr"><span>Creative Presentation</span><span class="live-date"></span></div>
+    <div class="body">
+      <div class="proj2-strip">
+        <div class="ps-cell"><img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&q=80" alt=""></div>
+        <div class="ps-cell"><img src="https://images.unsplash.com/photo-1463453091185-61582044d556?w=300&q=80" alt=""></div>
+        <div class="ps-cell"><img src="https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=300&q=80" alt=""></div>
+        <div class="ps-cell"><img src="https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=300&q=80" alt=""></div>
+      </div>
+      <div class="proj2-bottom">
+        <h2>SECOND<br>PROJECT</h2>
+        <p class="proj2-col">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+        <p class="proj2-col">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+      </div>
+    </div>
+    <div class="ftr">
+      <span>@samuelpineda</span>
+      <div class="nav-arrows">
+        <button class="nav-btn nav-prev">←</button>
+        <button class="nav-btn nav-next">→</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑩ MESSAGE ME -->
+  <div class="slide" id="s-msg" data-slug="message">
+    <div class="hdr"><span>Creative Presentation</span><span class="live-date"></span></div>
+    <div class="body">
+      <p class="home-label">Let's connect</p>
+      <h2 class="msg-title">MESSAGE<br>ME</h2>
+      <p class="msg-sub">I'd love to hear from you</p>
+      <a class="msg-btn" id="email-link" href="#">✉ &nbsp;Message Me</a>
+      <span class="msg-email">samuelpineda1113@gmail.com</span>
+    </div>
+    <div class="ftr">
+      <span>@samuelpineda</span>
+      <div class="nav-arrows">
+        <button class="nav-btn nav-prev">←</button>
+        <button class="nav-btn" disabled>→</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /slide-wrapper -->
+
+<script>
+/* ═══════════════════════════════════════════
+   PHOTO CONFIG — edit URLs here to swap photos
+   ═══════════════════════════════════════════ */
+const PHOTOS = {
+  intro:    "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=600&q=80",
+  about:    "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=600&q=80",
+  portL:    "https://images.unsplash.com/photo-1552058544-f2b08422138a?w=400&q=80",
+  portR:    "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&q=80",
+  p1A:      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&q=80",
+  p1B:      "https://images.unsplash.com/photo-1529665253569-6d01c0eaf7b6?w=300&q=80",
+  p1C:      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=300&q=80",
+  p2A:      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&q=80",
+  p2B:      "https://images.unsplash.com/photo-1463453091185-61582044d556?w=300&q=80",
+  p2C:      "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=300&q=80",
+  p2D:      "https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=300&q=80",
+};
+
+(function applyPhotos() {
+  const m = [
+    ['#s-intro .intro-photo img',           'intro'],
+    ['#s-about .about-photo img',           'about'],
+    ['#s-port .port-flank-l img',           'portL'],
+    ['#s-port .port-flank-r img',           'portR'],
+    ['#s-proj1 .pg1 img',                   'p1A'],
+    ['#s-proj1 .proj-cell:nth-child(2) img','p1B'],
+    ['#s-proj1 .proj-cell:nth-child(3) img','p1C'],
+    ['#s-proj2 .ps-cell:nth-child(1) img', 'p2A'],
+    ['#s-proj2 .ps-cell:nth-child(2) img', 'p2B'],
+    ['#s-proj2 .ps-cell:nth-child(3) img', 'p2C'],
+    ['#s-proj2 .ps-cell:nth-child(4) img', 'p2D'],
+  ];
+  m.forEach(([sel,key]) => {
+    const el = document.querySelector(sel);
+    if (el && PHOTOS[key]) el.src = PHOTOS[key];
+  });
+})();
+
+/* ── DATE ── */
+function dateStr() {
+  return new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}).toUpperCase();
+}
+function setDates() { document.querySelectorAll('.live-date').forEach(e => e.textContent = dateStr()); }
+setDates(); setInterval(setDates, 30000);
+
+/* ── SLIDES ── */
+const slides   = Array.from(document.querySelectorAll('.slide'));
+const slugs    = slides.map(s => s.dataset.slug);
+let current    = 0;
+let animating  = false;
+
+/* ── TOC ── */
+const tocDefs = [
+  { label:'Introduction',       idx:2 },
+  { label:'Education',          idx:4 },
+  { label:'Personal Skill',     idx:5 },
+  { label:'Project Portfolio',  idx:6 },
+  { label:'Projects',           idx:7 },
+  { label:'Message Me',         idx:9 },
+];
+const tocList = document.getElementById('toc-list');
+tocDefs.forEach((t,i) => {
+  const d = document.createElement('div');
+  d.className = 'toc-item';
+  d.innerHTML = `<div class="toc-dot"></div><span class="toc-label">${t.label}</span><span class="toc-num">0${i+1}</span>`;
+  d.addEventListener('click', () => goTo(t.idx));
+  tocList.appendChild(d);
+});
+
+/* ── PROGRESS DOTS ── */
+const pdotWrap = document.getElementById('progress-dots');
+slides.forEach((_,i) => {
+  const d = document.createElement('div');
+  d.className = 'pdot' + (i===0?' active':'');
+  d.addEventListener('click', () => goTo(i));
+  pdotWrap.appendChild(d);
+});
+function refreshDots() {
+  document.querySelectorAll('.pdot').forEach((d,i) => d.classList.toggle('active', i===current));
+}
+
+/* ── URL ── */
+function pushURL(idx) {
+  const slug = slugs[idx] || 'home';
+  try { history.pushState({idx}, '', '/'+(slug==='home'?'':slug)); } catch(e) {}
+}
+
+/* ── GO TO ── */
+function goTo(idx) {
+  if (animating || idx < 0 || idx >= slides.length || idx === current) return;
+  animating = true;
+  const prev = current;
+  slides[prev].classList.add('exit-lft');
+  slides[prev].classList.remove('active');
+  setTimeout(() => { slides[prev].classList.remove('exit-lft'); animating = false; }, 550);
+  current = idx;
+  slides[current].classList.add('active');
+  refreshDots();
+  pushURL(current);
+  // hide swipe hint after first navigation
+  const hint = document.getElementById('swipe-hint');
+  if (hint) { hint.classList.add('gone'); setTimeout(()=>hint.style.display='none',600); }
+}
+
+/* ── NAV BUTTONS ── */
+document.querySelectorAll('.nav-next').forEach(b => b.addEventListener('click', () => goTo(current+1)));
+document.querySelectorAll('.nav-prev').forEach(b => b.addEventListener('click', () => goTo(current-1)));
+
+/* ── KEYBOARD ── */
+document.addEventListener('keydown', e => {
+  if (e.key==='ArrowRight'||e.key==='ArrowDown') goTo(current+1);
+  if (e.key==='ArrowLeft' ||e.key==='ArrowUp')   goTo(current-1);
+});
+
+/* ── TOUCH SWIPE ── */
+let tx0=0, ty0=0;
+document.addEventListener('touchstart', e => { tx0=e.touches[0].clientX; ty0=e.touches[0].clientY; }, {passive:true});
+document.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx0;
+  const dy = e.changedTouches[0].clientY - ty0;
+  if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 44) {
+    if (dx < 0) goTo(current+1); else goTo(current-1);
+  }
+}, {passive:true});
+
+/* ── EMAIL ── */
+document.getElementById('email-link').addEventListener('click', e => {
+  e.preventDefault();
+  const EMAIL = 'samuelpineda1113@gmail.com';
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (isMobile) {
+    window.location.href = `googlegmail://co?to=${EMAIL}&subject=Hello%20Samuel!`;
+    setTimeout(() => window.location.href = `mailto:${EMAIL}?subject=Hello%20Samuel!`, 500);
+  } else {
+    window.location.href = `mailto:${EMAIL}?subject=Hello%20Samuel!`;
+  }
+});
+
+/* ── CURSOR (desktop) ── */
+const cdot = document.getElementById('cursor-dot');
+const cring= document.getElementById('cursor-ring');
+if (cdot && cring) {
+  let rx=0,ry=0;
+  document.addEventListener('mousemove', e=>{
+    cdot.style.cssText = `left:${e.clientX}px;top:${e.clientY}px`;
+    rx+=(e.clientX-rx)*.11; ry+=(e.clientY-ry)*.11;
+  });
+  (function loop(){
+    cring.style.cssText=`left:${rx}px;top:${ry}px`;
+    requestAnimationFrame(loop);
+  })();
+  document.querySelectorAll('button,a,.toc-item,.pdot').forEach(el=>{
+    el.addEventListener('mouseenter',()=>document.body.classList.add('cursor-hover'));
+    el.addEventListener('mouseleave',()=>document.body.classList.remove('cursor-hover'));
+  });
+}
+
+/* ── POPSTATE ── */
+window.addEventListener('popstate', e => { if(e.state?.idx!=null) goTo(e.state.idx); });
+
+/* ── INIT ── */
+pushURL(0);
+</script>
+</body>
+</html>
